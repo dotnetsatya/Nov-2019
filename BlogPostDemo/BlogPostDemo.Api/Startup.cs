@@ -18,6 +18,8 @@ using System.IO;
 
 
 using BlogPostDemo.Api.Utilites;
+using Microsoft.AspNetCore.Mvc.Versioning;
+
 
 namespace BlogPostDemo.Api
 {
@@ -35,6 +37,8 @@ namespace BlogPostDemo.Api
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
             services.AddDependencies();
+
+            //services.AddSingleton<IBlogService, BlogService>();
 
             services.AddSwaggerGen(options =>
             {
@@ -96,10 +100,26 @@ namespace BlogPostDemo.Api
 
             });
 
+
+            services.AddApiVersioning(options =>
+            {
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = false;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            });
+
+            services.AddVersionedApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
+
+
         }
 
-    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -111,6 +131,7 @@ namespace BlogPostDemo.Api
                 app.UseHsts();
             }
 
+           
         // Enable middleware to serve generated Swagger as a JSON endpoint.
         app.UseSwagger();
 

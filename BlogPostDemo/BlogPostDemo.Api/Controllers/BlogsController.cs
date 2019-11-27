@@ -5,11 +5,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using BlogPostDemo.Models;
 using BlogPostDemo.Contracts;
+using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogPostDemo.Api.Controllers
 {
     [ApiController]
-    [Route("api/blog-management/")]
+    [ApiVersion("1")]
+    [Route("api/v{version:apiVersion}/blog-management/")]
     ///<summary>
     ///This is a simple API for testing swagger
     ///</summary>
@@ -30,7 +33,7 @@ namespace BlogPostDemo.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("blogs")]
-        public List<Blog> Get()
+        public ActionResult<List<Blog>> Get()
         {
             var blogs = _blogService.GetBlogs();
 
@@ -44,10 +47,17 @@ namespace BlogPostDemo.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("blogs-s")]
-        public Blog GetById([FromQuery] int id, [FromQuery] string name)
+        [ProducesResponseType(204)]
+        [ProducesResponseType(200)]
+        public ActionResult<Blog> GetById([Required] [FromQuery] int id, [FromQuery] string name)
         {
             var blog = _blogService.GetBlogById(id);
-            return blog;
+            if(blog == null)
+            {
+                return NotFound("No data found");
+            }
+
+            return Ok(blog);
         }
 
         /// <summary>
@@ -56,9 +66,30 @@ namespace BlogPostDemo.Api.Controllers
         /// <param name="blog">You need to pass blog object</param>
         [HttpPost]
         [Route("blogs")]
-        public void AddBlog(Blog blog)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult AddBlog(Blog blog)
         {
+            if(!IsBlogValid(blog))
+            {
+                return BadRequest("Invalid Input model");
+            }
+
             _blogService.AddBlog(blog);
+            return Ok(blog);
+        }
+
+        private bool IsBlogValid(Blog blog)
+        {
+            if(blog.Id > 0 && blog.Title !=null && blog.Author != null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
